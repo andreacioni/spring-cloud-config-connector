@@ -21,6 +21,7 @@
         <jersey.client.version>1.19.3</jersey.client.version>
         <jackson.version>2.4.3</jackson.version>
     </properties>
+    
     <repositories>
         <repository>
             <id>mulesoft-releases</id>
@@ -66,6 +67,20 @@
 		  <version>3.5</version>
 		  <scope>provided</scope>
 		</dependency>		
+		
+		<dependency>
+		    <groupId>org.mule</groupId>
+		    <artifactId>mule-encryption</artifactId>
+		    <version>1.1.0</version>
+		    <scope>provided</scope>
+		</dependency>
+		
+		<dependency>
+		    <groupId>com.mulesoft.modules</groupId>
+		    <artifactId>mule-secure-configuration-property-module</artifactId>
+		    <version>1.2.0</version>
+		    <classifier>mule-plugin</classifier>
+		</dependency>
 	</dependencies>
     
     

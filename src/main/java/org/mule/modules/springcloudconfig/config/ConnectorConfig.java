@@ -35,9 +35,68 @@ public class ConnectorConfig {
 	 * The tag for the configuration. Useful for versioning.
 	 */
 	@Configurable
-	@Optional
+	@Default("master")
 	private String label;
 	
+	@Configurable
+	@Default("false")
+	private boolean enableBasicAuth;
+	
+	@Configurable
+	@Optional
+	private String basicAuthUsername;		
+
+	@Configurable
+	@Optional
+	private String basicAuthPassword;
+
+	@Configurable
+	@Default("false")
+	private boolean enableEncryptedProps;
+	
+	@Configurable
+	@Optional
+	private String encryptedPropsPassword;
+	
+	public String getBasicAuthPassword() {
+		return basicAuthPassword;
+	}
+
+	public void setBasicAuthPassword(String basicAuthPassword) {
+		this.basicAuthPassword = basicAuthPassword;
+	}
+	
+	public boolean isEnableEncryptedProps() {
+		return enableEncryptedProps;
+	}
+
+	public void setEnableEncryptedProps(boolean enableEncryptedProps) {
+		this.enableEncryptedProps = enableEncryptedProps;
+	}
+
+	public String getEncryptedPropsPassword() {
+		return encryptedPropsPassword;
+	}
+
+	public void setEncryptedPropsPassword(String encryptedPropsPassword) {
+		this.encryptedPropsPassword = encryptedPropsPassword;
+	}
+
+	public boolean isEnableBasicAuth() {
+		return enableBasicAuth;
+	}
+
+	public void setEnableBasicAuth(boolean enableBasicAuth) {
+		this.enableBasicAuth = enableBasicAuth;
+	}
+	
+	public String getBasicAuthUsername() {
+		return basicAuthUsername;
+	}
+
+	public void setBasicAuthUsername(String basicAuthUsername) {
+		this.basicAuthUsername = basicAuthUsername;
+	}
 
 	public String getApplicationName() {
 		return applicationName;
@@ -74,8 +133,8 @@ public class ConnectorConfig {
 	@Override
 	public String toString() {
 		return "ConnectorConfig [configServerBaseUrl=" + configServerBaseUrl + ", applicationName=" + applicationName
-				+ ", profiles=" + profiles + ", label=" + label + "]";
-	}
-	
+				+ ", profiles=" + profiles + ", label=" + label + ", enableBasicAuth=" + enableBasicAuth
+				+ ", basicAuthUsername=" + basicAuthUsername + ", basicAuthPassword=" + basicAuthPassword + "]";
+	}	
 	
 }

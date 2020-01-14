@@ -1,11 +1,22 @@
 package org.mule.modules.springcloudconfig;
 
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -20,6 +31,8 @@ import org.mule.api.annotations.Connector;
 import org.mule.api.annotations.Processor;
 import org.mule.api.registry.MuleRegistry;
 import org.mule.api.registry.RegistrationException;
+import org.mule.encryption.Encrypter;
+import org.mule.encryption.exception.MuleEncryptionException;
 import org.mule.modules.springcloudconfig.config.ConnectorConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,17 +40,21 @@ import org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer
 import org.springframework.core.env.Environment;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import com.mulesoft.modules.configuration.properties.api.EncryptionAlgorithm;
+import com.mulesoft.modules.configuration.properties.api.EncryptionMode;
 
 @Connector(name="spring-cloud-config", friendlyName="Spring Cloud Config")
 public class SpringCloudConfigConnector extends PreferencesPlaceholderConfigurer {
 
 	private static final String NAME_PROPERTY = "name";
 
-
 	private static final String PROPERTY_SOURCES_PROPERTY = "propertySources";
 
-
 	private static final String SOURCE_PROPERTY = "source";
+	
+	private static final String ENCRYPTION_ALGHORITHM = "AES";
+	
+	private static final String ENCRYPTION_MODE = "CBC";
 
 
 	private static final Logger logger = LoggerFactory.getLogger(SpringCloudConfigConnector.class);
@@ -67,7 +84,7 @@ public class SpringCloudConfigConnector extends PreferencesPlaceholderConfigurer
     	
     	Client client = ClientBuilder.newClient();
     	client.register(JacksonJsonProvider.class);
-    	WebTarget target = client.target(config.getConfigServerBaseUrl()).path(resolveApplicationName()).path(resolveProfiles());
+    	WebTarget target = client.target(config.getConfigServerBaseUrl()).path(resolveApplicationName()).path(resolveProfiles()).path(config.getLabel());
     	Map<String, Object> result = target.request().accept(MediaType.APPLICATION_JSON).get(Map.class); 
     	
     	logger.debug("Got settings from cloud config server: " + result.toString());
@@ -93,14 +110,21 @@ public class SpringCloudConfigConnector extends PreferencesPlaceholderConfigurer
     				logger.debug("Read property with key: " + entry.getKey() + " from source.");
     			}
     			
-    			props.put(entry.getKey(), entry.getValue());
+    			if (config.isEnableEncryptedProps() && 
+    					entry.getValue() != null && 
+    					entry.getValue().startsWith("![") &&
+    					entry.getValue().endsWith("]")) {
+    				props.put(entry.getKey(), decryptValue(entry.getValue().substring(2, entry.getValue().length()-1)));
+        		} else {
+        			props.put(entry.getKey(), entry.getValue());
+        		}
     		}
     		
     	}
     	
     }
-    
-    @Override
+
+	@Override
     protected String resolvePlaceholder(String placeholder, Properties p) {
     	logger.debug("Call to resolve placeholder: " + placeholder);
     	
@@ -130,8 +154,6 @@ public class SpringCloudConfigConnector extends PreferencesPlaceholderConfigurer
     	String profiles = config.getProfiles();
     	
     	Environment springEnv = context.getRegistry().lookupObject(Environment.class);
-    	
-    	
     	
     	if (logger.isDebugEnabled()) logger.debug("Configured profiles: " + profiles);
     	
@@ -176,6 +198,15 @@ public class SpringCloudConfigConnector extends PreferencesPlaceholderConfigurer
     	
     	return app;
     	
+    }
+    
+    private String decryptValue(String encValue) throws MuleEncryptionException {
+    	final Encrypter encrypter = createEncrypter(ENCRYPTION_ALGHORITHM, ENCRYPTION_MODE, config.getEncryptedPropsPassword());
+    	return new String(encrypter.decrypt(Base64.getDecoder().decode(encValue)));
+    }
+    
+    private static Encrypter createEncrypter(final String algorithm, final String mode, final String key) {
+        return EncryptionAlgorithm.valueOf(algorithm).getBuilder().forKey(key).using(EncryptionMode.valueOf(mode)).build();
     }
 
 	public void setContext(MuleContext context) {
