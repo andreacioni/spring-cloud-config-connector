@@ -21,7 +21,8 @@ public class ConnectorConfig {
 	 */
 	@Configurable
 	@Default("http://localhost:8888/")
-	@Placement(group = "General")
+	@Placement(order=1)
+	@FriendlyName("URL")
 	private String configServerBaseUrl;
 	
 	/**
@@ -30,6 +31,10 @@ public class ConnectorConfig {
 	 */
 	@Configurable
 	@Optional
+	@Placement(order=2)
+	@FriendlyName("Application names")
+	@Summary("Comma-separated list of application names used to search properties on configuration server. "
+			+ "If a property is defined in one or more application the first that appears in this list is worth")
 	private String applicationName;
 	
 	/**
@@ -38,6 +43,8 @@ public class ConnectorConfig {
 	 */
 	@Configurable
 	@Optional
+	@Placement(order=3)
+	@Summary("Comma-separated list of profiles used to search properties on configuration server.")
 	private String profiles;
 	
 	/**
@@ -45,6 +52,8 @@ public class ConnectorConfig {
 	 */
 	@Configurable
 	@Default("master")
+	@Placement(order=3)
+	@Summary("Label is the git-branch to checkout in configuration server")
 	private String label;
 	
 	@Configurable
