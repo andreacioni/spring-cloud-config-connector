@@ -1,6 +1,7 @@
 package org.mule.modules.springcloudconfig;
 
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -143,7 +144,7 @@ public class SpringCloudConfigConnector extends PreferencesPlaceholderConfigurer
      */
     @Processor
     public Map<String, Object> dumpConfiguration() {
-    	return null;
+    	return new HashMap(props);
     }
     
     private String resolveProfiles() throws RegistrationException {
