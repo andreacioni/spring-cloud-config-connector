@@ -1,9 +1,5 @@
 package org.mule.modules.springcloudconfig;
 
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -11,25 +7,17 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mule.api.MuleContext;
 import org.mule.api.annotations.Config;
 import org.mule.api.annotations.Connector;
 import org.mule.api.annotations.Processor;
-import org.mule.api.registry.MuleRegistry;
 import org.mule.api.registry.RegistrationException;
 import org.mule.encryption.Encrypter;
 import org.mule.encryption.exception.MuleEncryptionException;
@@ -51,11 +39,6 @@ public class SpringCloudConfigConnector extends PreferencesPlaceholderConfigurer
 	private static final String PROPERTY_SOURCES_PROPERTY = "propertySources";
 
 	private static final String SOURCE_PROPERTY = "source";
-	
-	private static final String ENCRYPTION_ALGHORITHM = "AES";
-	
-	private static final String ENCRYPTION_MODE = "CBC";
-
 
 	private static final Logger logger = LoggerFactory.getLogger(SpringCloudConfigConnector.class);
 	
@@ -66,6 +49,8 @@ public class SpringCloudConfigConnector extends PreferencesPlaceholderConfigurer
     ConnectorConfig config;
     
     private Properties props;
+    
+    private Encrypter encrypter;
     
     public ConnectorConfig getConfig() {
         return config;
@@ -83,6 +68,12 @@ public class SpringCloudConfigConnector extends PreferencesPlaceholderConfigurer
     	logger.debug("Setting up connector with properties: " + config.toString());
     	
     	Client client = ClientBuilder.newClient();
+    	
+    	if(config.isEnableBasicAuth()) {
+    		logger.debug("Basic auth enabled");
+        	client.register(new Authenticator(config.getBasicAuthUsername(), config.getBasicAuthPassword()));
+    	}
+    	
     	client.register(JacksonJsonProvider.class);
     	WebTarget target = client.target(config.getConfigServerBaseUrl()).path(resolveApplicationName()).path(resolveProfiles()).path(config.getLabel());
     	Map<String, Object> result = target.request().accept(MediaType.APPLICATION_JSON).get(Map.class); 
@@ -93,6 +84,11 @@ public class SpringCloudConfigConnector extends PreferencesPlaceholderConfigurer
     	List<Map> sources = (List<Map>) result.get(PROPERTY_SOURCES_PROPERTY);
     	
     	logger.debug("Property sources are: " + sources);
+    	
+    	if(config.isEnableEncryptedProps()) {
+    		logger.debug("Encrypted properties flag set");
+    		encrypter = createEncrypter(config.getEncryptionAlghoritm().toString(), config.getEncryptionMode().toString(), config.getEncryptedPropsPassword());
+    	}
     	
     	for(int i = sources.size() - 1 ; i >= 0 ; i--) {
     		
@@ -201,7 +197,6 @@ public class SpringCloudConfigConnector extends PreferencesPlaceholderConfigurer
     }
     
     private String decryptValue(String encValue) throws MuleEncryptionException {
-    	final Encrypter encrypter = createEncrypter(ENCRYPTION_ALGHORITHM, ENCRYPTION_MODE, config.getEncryptedPropsPassword());
     	return new String(encrypter.decrypt(Base64.getDecoder().decode(encValue)));
     }
     

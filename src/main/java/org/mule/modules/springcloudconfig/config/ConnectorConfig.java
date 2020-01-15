@@ -1,9 +1,17 @@
 package org.mule.modules.springcloudconfig.config;
 
 import org.mule.api.annotations.components.Configuration;
+import org.mule.api.annotations.display.FriendlyName;
+import org.mule.api.annotations.display.Password;
+import org.mule.api.annotations.display.Placement;
+import org.mule.api.annotations.display.Summary;
 import org.mule.api.annotations.Configurable;
 import org.mule.api.annotations.param.Default;
 import org.mule.api.annotations.param.Optional;
+import org.mule.util.StringUtils;
+
+import com.mulesoft.modules.configuration.properties.api.EncryptionAlgorithm;
+import com.mulesoft.modules.configuration.properties.api.EncryptionMode;
 
 @Configuration(friendlyName = "Spring Cloud Configuration")
 public class ConnectorConfig {
@@ -13,6 +21,7 @@ public class ConnectorConfig {
 	 */
 	@Configurable
 	@Default("http://localhost:8888/")
+	@Placement(group = "General")
 	private String configServerBaseUrl;
 	
 	/**
@@ -39,63 +48,54 @@ public class ConnectorConfig {
 	private String label;
 	
 	@Configurable
-	@Default("false")
-	private boolean enableBasicAuth;
-	
-	@Configurable
 	@Optional
+	@FriendlyName("Username")
+	@Placement(group = "HTTP Basic Auth", tab = "Security")
 	private String basicAuthUsername;		
 
 	@Configurable
 	@Optional
+	@Password
+	@FriendlyName("Password")
+	@Placement(group = "HTTP Basic Auth", tab = "Security")
 	private String basicAuthPassword;
-
-	@Configurable
-	@Default("false")
-	private boolean enableEncryptedProps;
 	
 	@Configurable
 	@Optional
+	@Password
+	@FriendlyName("Key")
+	@Placement(group = "Encrypted properties", tab = "Security")
+	@Summary("The key used to decrypt encrypted properties")
 	private String encryptedPropsPassword;
 	
-	public String getBasicAuthPassword() {
-		return basicAuthPassword;
-	}
-
-	public void setBasicAuthPassword(String basicAuthPassword) {
-		this.basicAuthPassword = basicAuthPassword;
-	}
+	@Configurable
+	@Default("AES")
+	@FriendlyName("Alghoritm")
+	@Placement(group = "Encrypted properties", tab = "Security")
+	@Summary("The alghoritm used to decrypt encrypted properties")
+	private EncryptionAlgorithm encryptionAlghoritm;
+	
+	@Configurable
+	@Default("CBC")
+	@FriendlyName("Mode")
+	@Placement(group = "Encrypted properties", tab = "Security")
+	@Summary("The alghoritm mode used to decrypt encrypted properties")
+	private EncryptionMode encryptionMode;
 	
 	public boolean isEnableEncryptedProps() {
-		return enableEncryptedProps;
-	}
-
-	public void setEnableEncryptedProps(boolean enableEncryptedProps) {
-		this.enableEncryptedProps = enableEncryptedProps;
-	}
-
-	public String getEncryptedPropsPassword() {
-		return encryptedPropsPassword;
-	}
-
-	public void setEncryptedPropsPassword(String encryptedPropsPassword) {
-		this.encryptedPropsPassword = encryptedPropsPassword;
-	}
-
-	public boolean isEnableBasicAuth() {
-		return enableBasicAuth;
-	}
-
-	public void setEnableBasicAuth(boolean enableBasicAuth) {
-		this.enableBasicAuth = enableBasicAuth;
+		return !StringUtils.isEmpty(encryptedPropsPassword);
 	}
 	
-	public String getBasicAuthUsername() {
-		return basicAuthUsername;
+	public boolean isEnableBasicAuth() {
+		return !StringUtils.isEmpty(basicAuthUsername) && !StringUtils.isEmpty(basicAuthPassword);
 	}
 
-	public void setBasicAuthUsername(String basicAuthUsername) {
-		this.basicAuthUsername = basicAuthUsername;
+	public String getConfigServerBaseUrl() {
+		return configServerBaseUrl;
+	}
+
+	public void setConfigServerBaseUrl(String configServerBaseUrl) {
+		this.configServerBaseUrl = configServerBaseUrl;
 	}
 
 	public String getApplicationName() {
@@ -122,19 +122,44 @@ public class ConnectorConfig {
 		this.label = label;
 	}
 
-	public String getConfigServerBaseUrl() {
-		return configServerBaseUrl;
+	public String getBasicAuthUsername() {
+		return basicAuthUsername;
 	}
 
-	public void setConfigServerBaseUrl(String configServerBaseUrl) {
-		this.configServerBaseUrl = configServerBaseUrl;
+	public void setBasicAuthUsername(String basicAuthUsername) {
+		this.basicAuthUsername = basicAuthUsername;
 	}
 
-	@Override
-	public String toString() {
-		return "ConnectorConfig [configServerBaseUrl=" + configServerBaseUrl + ", applicationName=" + applicationName
-				+ ", profiles=" + profiles + ", label=" + label + ", enableBasicAuth=" + enableBasicAuth
-				+ ", basicAuthUsername=" + basicAuthUsername + ", basicAuthPassword=" + basicAuthPassword + "]";
-	}	
+	public String getBasicAuthPassword() {
+		return basicAuthPassword;
+	}
+
+	public void setBasicAuthPassword(String basicAuthPassword) {
+		this.basicAuthPassword = basicAuthPassword;
+	}
+
+	public String getEncryptedPropsPassword() {
+		return encryptedPropsPassword;
+	}
+
+	public void setEncryptedPropsPassword(String encryptedPropsPassword) {
+		this.encryptedPropsPassword = encryptedPropsPassword;
+	}
+
+	public EncryptionAlgorithm getEncryptionAlghoritm() {
+		return encryptionAlghoritm;
+	}
+
+	public void setEncryptionAlghoritm(EncryptionAlgorithm encryptionAlghoritm) {
+		this.encryptionAlghoritm = encryptionAlghoritm;
+	}
+
+	public EncryptionMode getEncryptionMode() {
+		return encryptionMode;
+	}
+
+	public void setEncryptionMode(EncryptionMode encryptionMode) {
+		this.encryptionMode = encryptionMode;
+	}
 	
 }
